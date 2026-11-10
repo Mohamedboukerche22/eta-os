@@ -118,6 +118,77 @@ Run the development shell (Python, pytest, rich, restic, sqlite, shellcheck):
 nix develop
 ```
 
+## Build the installer ISO (step by step)
+
+Requirements: a Linux x86_64 machine (or VM) with at least 8 GB RAM, about 30 GB free
+disk, and Nix with flakes enabled.
+
+1. Install Nix (multi-user recommended) and enable flakes:
+
+   ```sh
+   sh <(curl -L https://nixos.org/nix/install) --daemon
+   mkdir -p ~/.config/nix
+   echo 'experimental-features = nix-command flakes' >> ~/.config/nix/nix.conf
+   ```
+
+2. Get the source and enter it:
+
+   ```sh
+   unzip eta-os-main.zip && cd eta-os-main
+   ```
+
+3. Check that the flake evaluates before the long build:
+
+   ```sh
+   nix flake show
+   nix eval .#nixosConfigurations.eta.config.system.build.toplevel.drvPath
+   ```
+
+4. Build the Python package and its tests (fast, catches packaging errors):
+
+   ```sh
+   nix build .#eta -L
+   ```
+
+5. Build the ISO:
+
+   ```sh
+   nix build .#iso -L
+   ls -lh result/iso/
+   ```
+
+   The file is `result/iso/eta-os-1.0.0-x86_64-linux.iso`. Checksum it with
+   `sha256sum result/iso/*.iso`.
+
+6. Test it in a VM before flashing real hardware:
+
+   ```sh
+   qemu-system-x86_64 -enable-kvm -m 2048 -cdrom result/iso/eta-os-1.0.0-x86_64-linux.iso
+   ```
+
+   Or write it to a USB stick (replace `/dev/sdX`, this erases the drive):
+   `sudo dd if=result/iso/eta-os-1.0.0-x86_64-linux.iso of=/dev/sdX bs=4M conv=fsync status=progress`
+
+### Building the ISO in GitHub Actions instead
+
+Push a tag such as `v1.0.0`, or run the `build-iso` workflow manually from the Actions tab.
+The ISO and `SHA256SUMS` are attached to the Release. Release assets are limited to 2 GB;
+if the ISO is larger, the workflow will fail at upload.
+
+### Troubleshooting
+
+- `experimental-features` error: add `--extra-experimental-features 'nix-command flakes'`
+  or edit `nix.conf` as in step 1.
+- `attribute ... missing` or option errors: the NixOS 26.05 channel has renamed options.
+  Run `nix flake update` only if you intend to move to a newer nixpkgs, then re-test,
+  because `flake.lock` pins the tested revision.
+- Test failure during `nix build .#eta`: run `nix build .#eta -L` and read the pytest
+  output. Integration tests are disabled in the Nix build by design.
+- Out of memory or disk: the ISO closure is large. Add swap, or free disk space, and
+  remove old results with `nix-collect-garbage -d`.
+- The ISO is offline by design. Building it still needs network access to
+  `cache.nixos.org` for the first build, since nothing is cached locally yet.
+
 ## Installing
 
 1. Download/build `eta-os-<version>-x86_64-linux.iso`.

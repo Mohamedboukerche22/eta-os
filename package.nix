@@ -94,7 +94,7 @@ python3.pkgs.buildPythonApplication {
   };
 
   dependencies = pythonDeps;
-  nativeBuildInputs = [ makeWrapper ];
+  nativeBuildInputs = [ makeWrapper python3.pkgs.setuptools python3.pkgs.wheel ];
   nativeCheckInputs = [ python3.pkgs.pytestCheckHook ];
   doCheck = true;
   disabledTestMarks = [ "integration" ];
