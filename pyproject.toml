@@ -1,0 +1,42 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "eta-os"
+version = "1.0.0"
+description = "Eta OS management and monitoring layer (minimal, offline-first NixOS server)"
+readme = "README.md"
+requires-python = ">=3.11"
+license = "MIT"
+authors = [{ name = "mohamedboukerch55" }]
+dependencies = ["rich>=13.0"]
+
+[project.optional-dependencies]
+mariadb = ["mysql-connector-python>=8.3"]
+test = ["pytest>=8.0"]
+
+[project.scripts]
+eta-admin = "eta.admin:main"
+eta-boot = "eta.boot:main"
+eta-monitor = "eta.monitor:main"
+eta-backup = "eta.backup:main"
+eta-health = "eta.health:main"
+eta-maintenance = "eta.maintenance:main"
+eta-install = "eta.install:main"
+eta-priv = "eta.priv:main"
+eta-backend = "eta.backend:main"
+eta-db-init = "eta.database:main"
+eta-settings-apply = "eta.settings_apply:main"
+eta-security-check = "eta.security_check:main"
+eta-log-rotate = "eta.logrotate:main"
+
+[tool.setuptools]
+packages = ["eta"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"
+markers = [
+  "integration: needs external binaries such as restic",
+]

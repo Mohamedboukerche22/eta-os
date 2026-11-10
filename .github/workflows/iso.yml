@@ -1,0 +1,49 @@
+name: build-iso
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-iso:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Nix
+        uses: cachix/install-nix-action@v31
+        with:
+          extra_nix_config: |
+            experimental-features = nix-command flakes
+            max-jobs = auto
+
+      - name: Show flake output
+        run: nix flake show --no-write-lock-file
+
+      - name: Build offline installer ISO
+        id: build
+        run: nix --option max-jobs auto build .#iso
+
+      - name: Collect artifacts
+        run: |
+          mkdir -p artifacts
+          cp -v result/iso/*.iso artifacts/
+          cd artifacts
+          sha256sum *.iso > SHA256SUMS
+          cat SHA256SUMS
+
+      - name: Upload ISO as release asset
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: Eta OS ${{ github.ref_name }}
+          files: |
+            artifacts/*.iso
+            artifacts/SHA256SUMS
+          overwrite_files: true

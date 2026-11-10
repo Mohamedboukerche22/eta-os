@@ -1,0 +1,20 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+.pytest_cache/
+build/
+dist/
+*.egg
+
+# Nix
+result
+result-*
+
+# Editors / OS
+*.swp
+.DS_Store
+
+# Local env
+.env
